@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>WCYVR 2013</title>
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/beige.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- My custom changes -->
+		<link rel="stylesheet" href="lib/css/my-custom.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section data-markdown>
+					<script type="text/template">
+						# Towards a Partial Page Templating System in WordPress
+
+						Zack Tollman
+
+						The Theme Foundry
+
+						@tollmanz
+					</script>
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## What is WordPress at Scale?
+						</script>
+					</section>
+					<section data-state="screenshot" data-background="images/techcrunch.png"></section>
+					<section data-state="screenshot" data-background="images/qz.png"></section>
+					<section data-state="screenshot" data-background="images/global-news.png"></section>					
+					<section data-state="screenshot" data-background="images/jackfm.png"></section>
+					<section data-state="screenshot" data-background="images/502.png"></section>
+					<section data-state="screenshot" data-background="images/503.png"></section>					
+					<section data-state="screenshot" data-background="images/504.png"></section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## The Problem
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							Page Caching is Lovely
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							Page Caching is Limiting
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							github.com/dashboard/issues
+						</script>
+					</section>
+					<section data-state="screenshot" data-background="images/github-issues-dashboard.png"></section>
+					<section data-state="screenshot" data-background="images/github-issues-dashboard-shared.png"></section>
+					<section data-state="screenshot" data-background="images/github-issues-dashboard-unique.png"></section>
+					<section data-markdown>
+						<script type="text/template">
+							Page caching is effective
+
+							but cannot work in these scenarios
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							## What Now?
+						</script>
+					</section>
+				</section>
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Solution 1: Hardware
+						</script>
+					</section>
+					<section>
+						<p>Expensive</p>
+						<p class="fragment">Hard to scale</p>
+					</section>
+				</section>
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Solution 2: "Fragment Caching"
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							Partial page caching
+
+							using object caching
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<div id="latest-activity">
+<?php
+$activity = wp_cache_get( 'latest_activity' );
+if ( false === $activity ) {
+	$activity = get_latest_activity();
+	wp_cache_set( 'latest_activity', $activity, '', 3600 );
+}
+echo $activity;
+?>
+</div>
+```
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							Cache user based variants
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<div id="latest-activity">
+<?php
+$user_id  = get_current_user_id();
+$activity = wp_cache_get( 'latest_activity', $user_id );
+if ( false === $activity ) {
+	$activity = get_latest_activity();
+	wp_cache_set( 'latest_activity', $activity, $user_id, 3600 );
+}
+echo $activity;
+?>
+</div>
+```						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							TLC transients
+							<p class="fragment">
+								<a href="http://markjaquith.wordpress.com/2013/04/26/fragment-caching-in-wordpress/">
+									Fragment caching class by Jaquith
+								</a>
+							</p>
+							<p class="fragment">Pods framework</p>
+						</script>
+					</section>
+					<section>
+						<p>Works well</p>
+						<p class="fragment">Easy to understand</p>
+						<p class="fragment">Always load all of WordPress</p>
+						<p class="fragment">Not very performant</p>
+					</section>
+				</section>
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Solution 3: Clever Advanced Cache
+							Daniel Dvorkin
+						</script>
+					</section>
+					<section>
+						<p>advanced-cached.php implements a page cache for WordPress</p>
+						<p class="fragment">Loaded after 1% of WordPress is loaded</p>
+					</section>
+					<section>
+						1. Generate a page with "nocache" tags
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<div id="latest-activity">
+	<nocache callback="get_latest_activity"></nocache>
+</div>
+```
+						</script>
+					</section>
+					<section>
+						2. Save an associated piece of meta data if there are any "nocache" tags
+					</section>
+					<section>
+						3. Serve the page
+						<p class="fragment">If metadata does not exist, strip the tags and display</p>
+						<p class="fragment">If metadata exists, generate the block</p>
+					</section>
+					<section>
+						4. Add "is_user_logged_in" for user variants
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<div id="latest-activity">
+	<nocache is_user_logged_in callback="get_latest_activity">
+		<p>Activity feed is not available.</p>
+	</nocache>
+</div>
+```
+						</script>
+					</section>
+					<section>
+						Has potential to be quite fast
+						<p class="fragment">Uses core standards</p>
+						<p class="fragment">"callback" method is may present problems</p>
+					</section>
+				</section>
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Solution 4: Edge Side Includes
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							Partial Page Templating
+						</script>
+					</section>
+					<section>
+						1. Save a page template
+						<p class="fragment">
+							Embed ESI tags in the template
+						</p>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<div id="latest-activity">
+	<?php 
+	// Loads partial-activity.php
+	get_template_part( 'partial', 'activity' ); 
+	?>
+</div>
+```
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<?php if ( isset( $_GET['partial'] ) && 'activity' === $_GET['partial'] ) : ?>
+	<?php echo get_latest_activity(); ?>
+<?php else : ?>
+	<esi:remove>
+		<p>Activity feed is not available.</p>
+	</esi:remove>
+	<!--esi
+	<esi:include src="<?php echo site_url( '/?partial=activity' ); ?>" />
+	-->
+<?php endif; ?>
+```
+						</script>
+					</section>
+					<section>
+						2. Load page template from Varnish, Akamai, Squid
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+<div id="latest-activity">
+	<esi:remove>
+		<p>Activity feed is not available.</p>
+	</esi:remove>
+	<!--esi
+	<esi:include src="<?php echo site_url( '/?partial=activity' ); ?>" />
+	-->
+</div>
+```
+						</script>
+					</section>
+					<section>
+						3. Render ESIs
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php
+function zdt_page_template_redirect() {
+	if ( isset( $_GET['partial'] ) ) {
+		$sanitize_partial = sanitize_key( $_GET['partial'] );
+		get_template_part( 'partial', $sanitize_partial );
+		exit();
+	}
+}
+
+add_action( 'template_redirect', 'zdt_page_template_redirect' );
+```
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+```php 
+<?php if ( isset( $_GET['partial'] ) && 'activity' === $_GET['partial'] ) : ?>
+	<?php echo get_latest_activity(); ?>
+<?php else : ?>
+	<esi:remove>
+		<p>Activity feed is not available.</p>
+	</esi:remove>
+	<!--esi
+	<esi:include src="<?php echo site_url( '/?partial=activity' ); ?>" />
+	-->
+<?php endif; ?>
+```
+						</script>
+					</section>
+					<section>
+						Load dynamic elements without any PHP
+						<p class="fragment">Adheres to WordPress standards</p>
+						<p class="fragment">Many partials can lead to many WordPress loads</p>
+					</section>
+				</section>
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## You Decide
+						</script>
+					</section>
+					<section>
+						<p>There is no right answer</p>
+						<p class="fragment">There are a lot of wrong answers</p>
+						<p class="fragment">Each app needs its own technique</p>
+					</section>
+				</section>	
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							Zack Tollman
+
+							The Theme Foundry
+
+							@tollmanz
+						</script>
+					</section>
+				</section>			
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+	</body>
+</html>
